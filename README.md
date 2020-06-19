@@ -41,11 +41,9 @@ An overview, and indications of where the user will have to change items is summ
 
 3. Set working directories. Since you'll be pulling this from Github, it doesn't require you to change anything, unless things are added on your end.
 
-4. Enter the start date for the mission:
-  a. `s <- ISOdate(2019, 10, 05, 18)` start date and time for mission (Year, month, day, 24hr time)
+4. Enter the start date for the mission `s <- ISOdate(2019, 10, 05, 18)` start date and time for mission (Year, month, day, 24hr time)
 
-5. You would specify your input file held in the route directory:
-  a. `file <- "AZMPFall_2020_config_02.csv"`
+5. You would specify your input file held in the route directory `file <- "AZMPFall_2020_config_02.csv"`
   
 6. This section uses a bit of script was borrowed and modified by Jay Choi.
 
