@@ -1,0 +1,98 @@
+lon_dd,lat_dd,station,operation,core,optime,xoptime,type,comments,owner,loc1,kts
+-63.6141,44.6811, ,BIO,0,4,0,Transit, ,NA,1,10
+-63.611,44.676, ,Transit,0,0,0,Transit, ,NA,1,10
+-63.599,44.674, ,Transit,0,0,0,Transit, ,NA,1,10
+-63.584,44.663, ,Transit,0,0,0,Transit, ,NA,1,10
+-63.5687,44.6545, ,Transit,0,0,0,Transit, ,NA,1,10
+-63.5632,44.6397, ,Transit,0,0,0,Transit, ,NA,1,10
+-63.5225,44.5717, ,Transit,0,0,0,Transit, ,NA,1,10
+-63.45,44.4002,,Transit,0,0,0,Transit, ,NA,1,10
+-65.48,43.25,,Transit,0,0,0,Transit, ,NA,1,10
+-66.2256,43.3252,,Transit,0,0,0,Transit,,NA,1,10
+-66.4003,43.7502,YL_01,Net_CTD,0,1,0,Operations,,NA,1,10
+-66.8513,43.6799,YL_02,Net_CTD,0,1,0,Operations,,NA,1,10
+-67.3023,43.6096,YL_03,Net_CTD,0,1,0,Operations,,NA,1,10
+-67.7534,43.5392,YL_04,Net_CTD,0,1,0,Operations,,NA,1,10
+-68.2124,43.4689,YL_05,Net_CTD,0,1,0,Operations,,NA,1,10
+-68.6643,43.3986,YL_06,Net_CTD,0,1,0,Operations,,NA,1,10
+-69.1064,43.3283,YL_07,Net_CTD,0,1,0,Operations,,NA,1,10
+-69.5574,43.2579,YL_08,Net_CTD,0,1,0,Operations,,NA,1,10
+-70.0098,43.1863,YL_09,Net_CTD,0,1,0,Operations,,NA,1,10
+-70.2724,43.1567,YL_10,Net_CTD,0,1,0,Operations,,NA,1,10
+-70.0084,43.0335,PL_01,Net_CTD,0,1,0,Operations,,NA,1,10
+-69.5574,42.9547,PL_02,Net_CTD,0,1,0,Operations,,NA,1,10
+-69.1064,42.876,PL_03,Net_CTD,0,1,0,Operations,,NA,1,10
+-68.6554,42.7893,PL_04,Net_CTD,0,1,0,Operations,,NA,1,10
+-68.2044,42.7024,PL_05,Net_CTD,0,1,0,Operations,,NA,1,10
+-67.7534,42.6256,PL_06,Net_CTD,0,1,0,Operations,,NA,1,10
+-67.3023,42.5526,PL_07,Net_CTD,0,1,0,Operations,,NA,1,10
+-66.8513,42.4623,PL_08,Net_CTD,0,1,0,Operations,,NA,1,10
+-66.4003,42.3778,PL_09,Net_CTD,0,1,0,Operations,,NA,1,10
+-65.35,41.8667,BBL_07,Net_CTD,1,5,0,Operations, ,NA,2,10
+-65.51,42,BBL_06,Net_CTD,1,4,0,Operations,,NA,2,10
+-65.5,42.1333,BBL_05,Net_CTD,1,2,0,Operations, ,NA,2,10
+-65.7433,42.4183,NEC_01,Net_CTD,0,1,0,Operations, ,NA,2,10
+-65.8083,42.3367,NEC_02,Net_CTD,0,1,0,Operations, ,NA,2,10
+-65.87,42.2717,NEC_04,Net_CTD,0,1,0,Operations, ,NA,2,10
+-65.9383,42.2,NEC_06,Net_CTD,0,1,0,Operations, ,NA,2,10
+-66.0374,42.1183,NEC_08,Net_CTD,0,1,0,Operations, ,NA,2,10
+-66.1417,41.99,NEC_10,Net_CTD,0,1,0,Operations, ,NA,2,10
+-66.0833,42.0617,NEC_09,CTD_Nutrients,0,1,0,Operations, ,NA,2,10
+-65.9683,42.1633,NEC_07,CTD_Nutrients,0,1,0,Operations, ,NA,2,10
+-65.9033,42.2333,NEC_05,CTD_Nutrients,0,1,0,Operations, ,NA,2,10
+-65.84,42.3,NEC_03,CTD_Nutrients,0,1,0,Operations, ,NA,2,10
+-65.4833,42.45,BBL_04,Net_CTD,1,1,0,Operations,,NA,2,10
+-65.4833,42.76,BBL_03,Net_CTD,1,1,0,Operations,,NA,2,10
+-65.48,43,BBL_02,Net_CTD,1,1,0,Operations,,NA,2,10
+-65.48,43.25,BBL_01,Net_CTD,1,1,0,Operations, ,NA,2,10
+-63.45,44.4002,HL_01,Net_CTD,1,1,0,Operations,,NA,3,10
+-63.3167,44.2667,HL_02,Nets_4_CTD,1,3,0,Operations,76 microns + 2 extra nets for Catherine,NA,3,10
+-62.8833,43.8833,HL_03,Net_CTD,1,1,0,Operations, ,NA,3,10
+-62.7527,43.7635,HL_03.3,Net_CTD,0,1,0,Operations, ,NA,3,10
+-62.4513,43.479,HL_04,Net_CTD,1,1,0,Operations, ,NA,3,10
+-62.0983,43.1825,HL_05,Net_CTD,1,1.5,0,Operations,,NA,3,10
+-61.8333,42.94,HL_05.5,Net_CTD,0,2,0,Operations, ,NA,3,10
+-61.7333,42.8317,HL_06,Net_CTD,1,3,0,Operations,,NA,3,10
+-61.6167,42.7333,HL_06.3,Net_CTD,0,3,0,Operations,,NA,3,10
+-61.5167,42.6183,HL_06.7,Net_CTD,0,3,0,Operations, ,NA,3,10
+-61.4333,42.475,HL_07,Net_CTD,1,5,0,Operations,,NA,3,10
+-61.3033,42.3785,HL_08,Net_CTD_ARGO,0,5,0,Operations,,NA,3,10
+-61.2098,42.2333,HL_09,Net_CTD_ARGO,0,5,0,Operations,,NA,3,10
+-61.0666,42.0306,HL_10,Net_CTD_ARGO,0,5,0,Operations,,NA,3,10
+-59,43.71,SG_28,Net_CTD,0,2,0,Operations,,NA,4,10
+-59.02,44,GULD_03,Net_CTD,0,3,0,Operations,,NA,4,10
+-58.9,43.79,GULD_04,Net_CTD,0,3,0,Operations,,NA,4,10
+-58.73,43.86,SG_23,Net_CTD,0,2,0,Operations,,NA,4,10
+-57.5267,43.4733,LL_09,Net_CTD_ARGO,1,5,0,Operations,,NA,5,10
+-57.8333,43.7833,LL_08,Net_CTD,1,4,0,Operations,,NA,5,10
+-58.175,44.1333,LL_07,Net_CTD,1,3,0,Operations,,NA,5,10
+-58.5083,44.475,LL_06,Net_CTD,1,1,0,Operations,,NA,5,10
+-58.85,44.8167,LL_05,Net_CTD,1,1,0,Operations,,NA,5,10
+-59.175,45.1583,LL_04,Net_CTD,1,1,0,Operations,,NA,5,10
+-59.5167,45.4917,LL_03,Net_CTD,1,1,0,Operations,,NA,5,10
+-59.7017,45.6583,LL_02,Net_CTD,1,1,0,Operations,,NA,5,10
+-59.85,45.825,LL_01,Net_CTD,1,1,0,Operations,,NA,5,10
+-59.5333,46,STAB_01,Net_CTD,0,1,0,Operations,,NA,6,10
+-59.365,46.1083,STAB_02,Net_CTD,0,1,0,Operations,,NA,6,10
+-59.195,46.2167,STAB_03,Net_CTD,0,1,0,Operations,,NA,6,10
+-59.065,46.3,STAB_04,Net_CTD,0,1,0,Operations,,NA,6,10
+-58.8833,46.4167,STAB_05,Net_CTD,0,1,0,Operations,,NA,6,10
+-58.4361,46.7105,STAB_06,Net_CTD,0,1,0,Operations,,NA,6,10
+-59.3417,47.5833,CSL_06,Net_CTD,1,1,0,Operations, ,NA,7,10
+-59.5583,47.4333,CSL_05,Net_CTD,1,1,0,Operations, ,NA,7,10
+-59.7833,47.2717,CSL_04,Net_CTD,1,1,0,Operations, ,NA,7,10
+-59.9917,47.1,CSL_03,Net_CTD,1,1,0,Operations, ,NA,7,10
+-60.1167,47.0233,CSL_02,Net_CTD,1,1,0,Operations,,NA,7,10
+-60.2167,46.9583,CSL_01,Net_CTD,1,1,0,Operations, ,NA,7,10
+-59.5333,46,,Transit,0,0,0,Transit,,NA,7,10
+-59.85,45.825,,Transit,0,0,0,Transit,,NA,7,10
+-60.9961,45.1046,,Transit,0,0,0,Transit,,NA,7,10
+-63.3167,44.2667,HL_02,Nets_4_CTD,1,3,0,Operations,76 microns + 2 extra nets for Catherine,NA,8,10
+-63.45,44.4002,,Transit,0,0,0,Transit,,NA,8,10
+-63.5225,44.5717, ,Transit,0,0,0,Transit, ,NA,8,10
+-63.5632,44.6397, ,Transit,0,0,0,Transit, ,NA,8,10
+-63.5687,44.6545, ,Transit,0,0,0,Transit, ,NA,8,10
+-63.584,44.663, ,Transit,0,0,0,Transit, ,NA,8,10
+-63.599,44.674, ,Transit,0,0,0,Transit, ,NA,8,10
+-63.611,44.676, ,Transit,0,0,0,Transit, ,NA,8,10
+-63.6141,44.6811, ,BIO,0,0,0,Transit, ,NA,8,10

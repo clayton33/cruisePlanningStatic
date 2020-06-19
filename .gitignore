@@ -37,3 +37,9 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# Other things to ignore
+bathymetry/*
+*.html
+routes/*
+!routes/AZMPSpring_2020_config_01.csv
