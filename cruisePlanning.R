@@ -58,8 +58,14 @@ s <- ISOdate(2019, 10, 05, 18) #start date and time for mission (Year, month, da
 
 rwd <- "./bathymetry/chs15sec1.asc"
 if(!file.exists(rwd)){
-  lonrange <- range(data[['lon_dd']]) + c(-5,5)
-  latrange <- range(data[['lat_dd']]) + c(-5, 5)
+  mround <- function(x,base){
+    base*ceiling(x/base)
+  }
+  # round up to nearest 10 degrees to avoid needing to download
+  # while at sea. rounding to nearest 5 was considered, but 10
+  # will encompass boundary cases.
+  lonrange <- mround(range(data[['lon_dd']]), 10)
+  latrange <- mround(data[['lat_dd']], 10)
   noaatopo <- getNOAA.bathy(lon1 = lonrange[1], lon2 = lonrange[2],
                             lat1 = latrange[1], lat2 = latrange[2],
                             keep=TRUE, resolution = 1)
@@ -77,34 +83,49 @@ shapes <- "./shapefiles"
 ## 5. Distance and time calculations ----
 
 ## The Great circle functions modified from script provided from Jae Choi - https://github.com/jae0/ecomod/blob/master/spatialmethods/src/_Rfunctions/geodist.r
-source(paste(funs,"GreatCircle.R",sep="/"))
-source(paste(funs,"GeoDist.R",sep="/"))
+#source(paste(funs,"GreatCircle.R",sep="/"))
+#source(paste(funs,"GeoDist.R",sep="/"))
 
+### below is what was previously used, switch to using 'geodDist' from oce package.
 ##default is great circle... Vincenty is a more accurate version but is not vectorized (yet).
+# Coords <- c("lon_dd", "lat_dd") # order is important
+# Result <- geodist(data[2:l,Coords],data[1:l,Coords], method="great.circle") #output distance in metres on diagonal in matrix in kilometers
+# 
+# ##Extracts distance values from "Result" matrix and calculates distance in nautical miles to 1 decimal place
+# dist_nm <- as.data.frame(diag(Result)*0.539957) # extracts values from diagonal geodist output
+# dist_nm[max(l),] <- 0
+# names(dist_nm) <- c("dist_nm")
+# data$dist_nm <- round(dist_nm$dist_nm,1)
 
-Coords <- c("lon_dd", "lat_dd") # order is important
-Result <- geodist(data[2:l,Coords],data[1:l,Coords], method="great.circle") #output distance in metres on diagonal in matrix in kilometers
-
-##Extracts distance values from "Result" matrix and calculates distance in nautical miles to 1 decimal place
-dist_nm <- as.data.frame(diag(Result)*0.539957) # extracts values from diagonal geodist output
-dist_nm[max(l),] <- 0
-names(dist_nm) <- c("dist_nm")
-data$dist_nm <- round(dist_nm$dist_nm,1)
+# calculate distance between input coordinates
+idx1 <- 1:(length(data[['lon_dd']])-1)
+idx2 <- 2:length(data[['lon_dd']])
+# previous version used great circle
+# use maintained function geoDist
+# but this method uses vincenty
+# differences are small, and the cumulative difference is only 2nm
+distkm <- geodDist(longitude1 = data[['lon_dd']][idx1],
+                   latitude1 = data[['lat_dd']][idx1],
+                   longitude2 = data[['lon_dd']][idx2],
+                   latitude2 = data[['lat_dd']][idx2])
+distnm <- distkm * 0.539957
+# add 0 for length agreements
+distnm <- c(distnm, 0)
+data[['dist_nm']] <- distnm
 
 ##Convert Latitude (lat) and Longitude (lon) from DD to DM
 
 source(paste(funs,"dd_dm.R",sep="/"))
 source(paste(funs,"dd_dms.R",sep="/"))
 
-lat <- data[,2]
-  
-data$lat_dm <- dd_dm(lat,l,"y")
-data$lon_dm <- dd_dm(data$lon_dd,l,"x")
+
+data$lat_dm <- dd_dm(data[['lat_dd']],l,"y")
+data$lon_dm <- dd_dm(data[['lon_dd']],l,"x")
 
 ##Convert Latitude (Lat) and Longitude from DD to DD°MM,SS'N
 
-data$lat_dms <- dd_dms(data$lat_dd,l,"y")
-data$lon_dms <- dd_dms(data$lon_dd,l,"x")
+data$lat_dms <- dd_dms(data[['lat_dd']],l,"y")
+data$lon_dms <- dd_dms(data[['lon_dd']],l,"x")
 
 
 ##This formula calculates your transit time using your distance in nautical miles/vessel transit speed
@@ -140,27 +161,44 @@ for (n in 2:l){
 #This is where to ask the user to enter a shapefile output name
 
 ## 7. Extract depth from ASCII - turn on and off ----
-if (!exists('depth')) {
+if (file.exists(rwd)) {
   depth <- readAsciiGrid(rwd, proj4string=CRS("+proj=longlat +datum=WGS84"))#assigns ASCII grid from rwd to variable name
+
+  data1 <- data[, names(data) %in% c("lon_dd", "lat_dd")]
+  data2 <- data[, !names(data) %in% c("lon_dd", "lat_dd")]
+  data3 <- SpatialPointsDataFrame(data1, data2, coords.nrs = numeric(0),proj4string = CRS("+proj=longlat +datum=WGS84"), match.ID = TRUE, bbox = NULL)
+  extval <- round(over(data3, depth),2)
+
+  data <- cbind(data,extval)
+  nc <- ncol(data)
+  data[,nc] <- data[,nc]*-1
+  names(data)[names(data) %in% basename(rwd)] <- "depth_m"
+
+  ## 8. Prepare data for export as a shape file and .csv and remove depth from type "Transit". and create a htmlplot for export ----
+  data1 <- data[, names(data) %in% c("lon_dd", "lat_dd")]
+  data2 <- data
+  
+  data3 <- SpatialPointsDataFrame(data1, data2, 
+                                  coords.nrs = numeric(0), 
+                                  proj4string = CRS("+proj=longlat +datum=WGS84"), 
+                                  match.ID = TRUE, bbox = NULL)
+
+  data3$depth_m <- ifelse(data3$type=='Transit', 0, data3$depth_m) #This filter just removes depth values from transit points
+} else {
+  # get depth at stations using topo
+  zs <- interp.surface(obj = list(x = topo[['longitude']],
+                                  y = topo[['latitude']],
+                                  z = topo[['z']]),
+                       loc = cbind(data[['lon_dd']],
+                                   data[['lat_dd']]))
+  data[['depth_m']] <- zs
+  data[['depth_m']] <- ifelse(data[['type']] == 'Transit', 0, data[['depth_m']])
+  coords <- data[, names(data) %in% c("lon_dd", "lat_dd")]
+  data3 <- SpatialPointsDataFrame(coords = coords, data = data, 
+                                          coords.nrs = numeric(0), 
+                                          proj4string = CRS("+proj=longlat +datum=WGS84"), 
+                                          match.ID = TRUE, bbox = NULL)
 }
-data1 <- data[,1:2]
-data2 <- data[,3:length(data)]
-data3 <- SpatialPointsDataFrame(data1, data2, coords.nrs = numeric(0),proj4string = CRS("+proj=longlat +datum=WGS84"), match.ID = TRUE, bbox = NULL)
-extval <- round(over(data3, depth),2)
-
-data <- cbind(data,extval)
-nc <- ncol(data)
-data[,nc] <- data[,nc]*-1
-colnames(data)[nc] <- "depth_m"
-
-## 8. Prepare data for export as a shape file and .csv and remove depth from type "Transit". and create a htmlplot for export ----
-data1 <- data[,1:2]
-data2 <- data[,1:length(data)]
-
-data3 <- SpatialPointsDataFrame(data1, data2, coords.nrs = numeric(0),proj4string = CRS("+proj=longlat +datum=WGS84"), match.ID = TRUE, bbox = NULL)
-
-data3$depth_m <- ifelse(data3$type=='Transit', 0, data3$depth_m) #This filter just removes depth values from transit points
-
 
 ## this step adds another field to the shapefile for the end coordinates for xy to route calculation in R
 lon_dd_e <- 0
@@ -215,7 +253,7 @@ nc <- ncol(data3)+2
 data4 <- as.data.frame(data3)
 data4 <- data4[,1:(nc-2)]
 ##write summary csv that has same order of variables as shapefile
-write.csv(data4, paste(routepath, file4,sep="/"), row.names=F)
+write.csv(data4, paste(routepath, file4, sep="/"), row.names=F)
 
 library(htmlwidgets)
 #position of transit points
