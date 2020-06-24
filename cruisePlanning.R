@@ -33,7 +33,8 @@ library(mapview)
 library(leaflet)
 library(oce)
 library(Orcs)
-library(marmap)
+library(marmap) # for obtaining bathymetry if no bathy file is given
+library(fields) # for interp.surface if no bathy file is given
 
 #### 2. Choose your input file ----
 
@@ -58,14 +59,23 @@ s <- ISOdate(2019, 10, 05, 18) #start date and time for mission (Year, month, da
 
 rwd <- "./bathymetry/chs15sec1.asc"
 if(!file.exists(rwd)){
-  mround <- function(x,base){
-    base*ceiling(x/base)
+  mround <- function(x, base, method = 'round'){
+    base*do.call(method, list(x = x/base))
   }
   # round up to nearest 10 degrees to avoid needing to download
   # while at sea. rounding to nearest 5 was considered, but 10
-  # will encompass boundary cases.
-  lonrange <- mround(range(data[['lon_dd']]), 10)
-  latrange <- mround(data[['lat_dd']], 10)
+  # will help with boundary cases.
+  lonrange <- c(mround(min(data[['lon_dd']]), base = 10, method = 'floor'),
+                mround(max(data[['lon_dd']]), base = 10, method = 'ceiling'))
+  latrange <- c(mround(min(data[['lat_dd']]), base = 10, method = 'floor'),
+                mround(max(data[['lat_dd']]), base = 10, method = 'ceiling'))
+  # do a check for near boundary cases
+  # if min/max longitude/latitude is within 2.5 degrees of lon/latrange, +/- 10
+  lonrange <- c(ifelse(abs(min(data[['lon_dd']]) - lonrange[1]) < 2.5, lonrange[1] - 10, lonrange[1]),
+                ifelse(abs(max(data[['lon_dd']]) - lonrange[2]) < 2.5, lonrange[2] + 10, lonrange[2]))
+  latrange <- c(ifelse(abs(min(data[['lat_dd']]) - latrange[1]) < 2.5, latrange[1] - 10, latrange[1]),
+                ifelse(abs(max(data[['lat_dd']]) - latrange[2]) < 2.5, latrange[2] + 10, latrange[2]))
+  
   noaatopo <- getNOAA.bathy(lon1 = lonrange[1], lon2 = lonrange[2],
                             lat1 = latrange[1], lat2 = latrange[2],
                             keep=TRUE, resolution = 1)
@@ -356,4 +366,3 @@ library(tools)   # unless already loaded, comes with base R
 route_html <- paste(file_path_sans_ext(file),"_",as.numeric(format(Sys.Date(), "%y%m%d")),"_",time,".html",sep="")
 
 saveWidget(widget = route, file = route_html)
-#End

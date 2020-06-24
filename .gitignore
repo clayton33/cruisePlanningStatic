@@ -39,7 +39,13 @@ vignettes/*.pdf
 .Renviron
 
 # Other things to ignore
+# bathymetry folder which might contain a big file
 bathymetry/*
+# any .html generated files
 *.html
+# all output and input files
 routes/*
+# keep one for an example
 !routes/AZMPSpring_2020_config_01.csv
+# ignore any downloaded bathymetry data
+*.csv
