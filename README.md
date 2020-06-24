@@ -9,7 +9,7 @@ The script `cruisePlanning.R` contains code that aids in the planning of oceanog
 
 In order for the script to run successfully, the following directories need to be present. Some are optional, but suggested in certain circumstances. They are all provided here in the Github repo, so no alteration or addition in needed by the user with the exception of the `bathymetry` directory.
 
-1. `bathymetry` This is an optional directory, which could contain a high resolution bathymetry `.asc` file. If it is not present, the script will call the function `getNOAA.bathy` from the `marmap` package, and download 1 minute resolution data over the range of latitudes and logitudes loaded from the given `.csv` file.
+1. `bathymetry` This is an optional directory, which could contain a high resolution bathymetry `.asc` file. If it is not present, the script will call the function `getNOAA.bathy` from the `marmap` package, and download 1 minute resolution data over the range of latitudes and logitudes loaded from the given `.csv` file. *note :* the user should insure the bathymetry data is present before going to sea. 
 
 2. `functions` This contains various functions used in the script.
 

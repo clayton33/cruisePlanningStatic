@@ -52,7 +52,7 @@ data$ID <- seq(from=1, to=max(l))
 
 s <- ISOdate(2019, 10, 05, 18) #start date and time for mission (Year, month, day, 24hr time)
 
-### 5. point to various paths ----
+### 5. Point to various paths ----
 
 ##Enter file name for ascii bathymetry
 
