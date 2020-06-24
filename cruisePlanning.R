@@ -82,21 +82,6 @@ shapes <- "./shapefiles"
 
 ## 5. Distance and time calculations ----
 
-## The Great circle functions modified from script provided from Jae Choi - https://github.com/jae0/ecomod/blob/master/spatialmethods/src/_Rfunctions/geodist.r
-#source(paste(funs,"GreatCircle.R",sep="/"))
-#source(paste(funs,"GeoDist.R",sep="/"))
-
-### below is what was previously used, switch to using 'geodDist' from oce package.
-##default is great circle... Vincenty is a more accurate version but is not vectorized (yet).
-# Coords <- c("lon_dd", "lat_dd") # order is important
-# Result <- geodist(data[2:l,Coords],data[1:l,Coords], method="great.circle") #output distance in metres on diagonal in matrix in kilometers
-# 
-# ##Extracts distance values from "Result" matrix and calculates distance in nautical miles to 1 decimal place
-# dist_nm <- as.data.frame(diag(Result)*0.539957) # extracts values from diagonal geodist output
-# dist_nm[max(l),] <- 0
-# names(dist_nm) <- c("dist_nm")
-# data$dist_nm <- round(dist_nm$dist_nm,1)
-
 # calculate distance between input coordinates
 idx1 <- 1:(length(data[['lon_dd']])-1)
 idx2 <- 2:length(data[['lon_dd']])
@@ -167,11 +152,10 @@ if (file.exists(rwd)) {
   data1 <- data[, names(data) %in% c("lon_dd", "lat_dd")]
   data2 <- data[, !names(data) %in% c("lon_dd", "lat_dd")]
   data3 <- SpatialPointsDataFrame(data1, data2, coords.nrs = numeric(0),proj4string = CRS("+proj=longlat +datum=WGS84"), match.ID = TRUE, bbox = NULL)
-  extval <- round(over(data3, depth),2)
+  # this is the inferred depth, mult by -1 to get it in depth below sealevel
+  extval <- round(over(data3, depth),2) * -1 
 
   data <- cbind(data,extval)
-  nc <- ncol(data)
-  data[,nc] <- data[,nc]*-1
   names(data)[names(data) %in% basename(rwd)] <- "depth_m"
 
   ## 8. Prepare data for export as a shape file and .csv and remove depth from type "Transit". and create a htmlplot for export ----
@@ -183,7 +167,7 @@ if (file.exists(rwd)) {
                                   proj4string = CRS("+proj=longlat +datum=WGS84"), 
                                   match.ID = TRUE, bbox = NULL)
 
-  data3$depth_m <- ifelse(data3$type=='Transit', 0, data3$depth_m) #This filter just removes depth values from transit points
+  data3[['depth_m']] <- ifelse(data3$type=='Transit', 0, data3$depth_m) #This filter just removes depth values from transit points
 } else {
   # get depth at stations using topo
   zs <- interp.surface(obj = list(x = topo[['longitude']],
@@ -195,9 +179,9 @@ if (file.exists(rwd)) {
   data[['depth_m']] <- ifelse(data[['type']] == 'Transit', 0, data[['depth_m']])
   coords <- data[, names(data) %in% c("lon_dd", "lat_dd")]
   data3 <- SpatialPointsDataFrame(coords = coords, data = data, 
-                                          coords.nrs = numeric(0), 
-                                          proj4string = CRS("+proj=longlat +datum=WGS84"), 
-                                          match.ID = TRUE, bbox = NULL)
+                                  coords.nrs = numeric(0), 
+                                  proj4string = CRS("+proj=longlat +datum=WGS84"), 
+                                  match.ID = TRUE, bbox = NULL)
 }
 
 ## this step adds another field to the shapefile for the end coordinates for xy to route calculation in R
@@ -249,20 +233,20 @@ EEZ <- readOGR(dsn=shapes,
 NAFO <- readOGR(dsn=shapes,
                 layer = "NAFO_DivisionsPoly_WGS", GDAL1_integer64_policy = TRUE)
 
-nc <- ncol(data3)+2
 data4 <- as.data.frame(data3)
-data4 <- data4[,1:(nc-2)]
+# omit lon[lat]_dd_ee 
+data4 <- data4[,!names(data4) %in% c('lon_dd_ee', 'lat_dd_ee')]
 ##write summary csv that has same order of variables as shapefile
 write.csv(data4, paste(routepath, file4, sep="/"), row.names=F)
 
 library(htmlwidgets)
 #position of transit points
-tpts <- subset(data4,data4$type=="Transit")
+tpts <- subset(data4, type == "Transit")
 #position of mooring points
-moorings <- subset(data4,data4$operation=="Recovery"|data4$operation=="Deployment")
+mpts <- subset(data4, operation == "Recovery"| operation == "Deployment")
 #position of operations points
-opts <- subset(data4,data4$type=="Operations")
-data4sel <- as.matrix(data4[,c(1:2)])
+opts <- subset(data4, type =="Operations")
+data4sel <- as.matrix(data4[, names(data4) %in% c('lon_dd','lat_dd')])
 #converts data4 points to lines for inclusion in output map
 data4ln <- coords2Lines(data4sel, ID=paste(file,"Route",sep=" "))
 
@@ -331,18 +315,18 @@ route<-leaflet(data4) %>%
           # round(moorings$dist_nm,1),"nm","&",round(moorings$trans_hr,1),"hr(s)",sep=" "), 
   #highlightOptions = highlightOptions(color = "white", weight = 20,bringToFront = TRUE))%>%
   
-addCircleMarkers(lng=moorings$lon_dd, lat=moorings$lat_dd, weight = 2, radius=20, color="green",stroke = TRUE, opacity=0.5,
+addCircleMarkers(lng=mpts$lon_dd, lat=mpts$lat_dd, weight = 2, radius=20, color="green",stroke = TRUE, opacity=0.5,
                  group="Mooring Locations",fillOpacity = 0.5, clusterOptions=markerClusterOptions(radius=5),
-                 popup=paste("ID:",moorings$ID,"|", 
-                              "Station:", moorings$station,"|",
-                              "Lon:", round(moorings$lon_dd,3), "|",
-                              "Lat:",round(moorings$lat_dd,3), "|",
-                              "Depth:",round(moorings$depth_m,1),"m","|", 
-                              "Arrival:", substrLeft(moorings$arrival,16),"|",
-                              "Departure:",substrLeft(moorings$departure,16), "|",
-                              "Op Time:", (moorings$optime+moorings$xoptime),"hr(s)","|",
-                              "Operation(s):",moorings$operation, "|",
-                              "Next Stn:", round(moorings$dist_nm,1),"nm","&",round(moorings$trans_hr,1),"hr(s)",
+                 popup=paste("ID:",mpts$ID,"|", 
+                              "Station:", mpts$station,"|",
+                              "Lon:", round(mpts$lon_dd,3), "|",
+                              "Lat:",round(mpts$lat_dd,3), "|",
+                              "Depth:",round(mpts$depth_m,1),"m","|", 
+                              "Arrival:", substrLeft(mpts$arrival,16),"|",
+                              "Departure:",substrLeft(mpts$departure,16), "|",
+                              "Op Time:", (mpts$optime+mpts$xoptime),"hr(s)","|",
+                              "Operation(s):",mpts$operation, "|",
+                              "Next Stn:", round(mpts$dist_nm,1),"nm","&",round(mpts$trans_hr,1),"hr(s)",
                               sep=" "))%>%
   
   
