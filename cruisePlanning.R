@@ -295,19 +295,30 @@ route<-leaflet(data4) %>%
   #Transit Points
   addCircles(lng=tpts$lon_dd,lat=tpts$lat_dd, weight = 5, radius=10, color="red", stroke = TRUE,opacity=0.5,
              group="Transit Locations",fillOpacity = 1,
-             popup=paste ("ID:",tpts$ID,"|", "Station:", tpts$type,"|","Lon:", round(tpts$lon_dd,3), "|","Lat:",
-                          round(tpts$lat_dd,3),"|","Arrival:",substrLeft(tpts$arrival,16),"|","Departure:",
-                          substrLeft(tpts$departure,16), "Next Stn:",round(tpts$dist_nm,1),"nm","&",round(tpts$trans_hr,1),
-                          "hr(s)",sep=" "),highlightOptions = highlightOptions(color = "white", weight = 20,bringToFront = TRUE))%>%
+             popup=paste ("ID:",tpts$ID,"|", 
+                          "Station:", tpts$type,"|",
+                          "Lon:", round(tpts$lon_dd,3), "|",
+                          "Lat:", round(tpts$lat_dd,3),"|",
+                          "Arrival:",substrLeft(tpts$arrival,16),"|",
+                          "Departure:", substrLeft(tpts$departure,16), 
+                          "Next Stn:",round(tpts$dist_nm,1),"nm","&",round(tpts$trans_hr,1), "hr(s)", 
+                          sep=" "), 
+             highlightOptions = highlightOptions(color = "white", weight = 20,bringToFront = TRUE))%>%
   
   #Operations Points
   addCircles(lng=opts$lon_dd, lat=opts$lat_dd, weight = 5, radius=10, color="yellow",stroke = TRUE, opacity=.5,
              group="Operations Locations",fillOpacity = 1, 
-             popup=paste ("ID:",opts$ID,"|", "Station:", opts$station,"|","Lon:", round(opts$lon_dd,3), "|","Lat:",
-                          round(opts$lat_dd,3), "|","Depth:",round(opts$depth_m,1),"m","|", "Arrival:",
-                          substrLeft(opts$arrival,16),"|","Departure:",substrLeft(opts$departure,16), "|","Op Time:",
-                          (opts$optime+opts$xoptime),"hr(s)","|","Operation(s):",opts$operation, "|","Next Stn:",
-                          round(opts$dist_nm,1),"nm","&",round(opts$trans_hr,1),"hr(s)",sep=" "),
+             popup=paste ("ID:",opts$ID,"|", 
+                          "Station:", opts$station,"|",
+                          "Lon:", round(opts$lon_dd,3), "|",
+                          "Lat:", round(opts$lat_dd,3), "|",
+                          "Depth:",round(opts$depth_m,1),"m","|", 
+                          "Arrival:", substrLeft(opts$arrival,16),"|",
+                          "Departure:", substrLeft(opts$departure,16), "|",
+                          "Op Time:", (opts$optime+opts$xoptime),"hr(s)","|",
+                          "Operation(s):",opts$operation, "|",
+                          "Next Stn:", round(opts$dist_nm,1),"nm","&",round(opts$trans_hr,1),"hr(s)", 
+                          sep=" "),
              highlightOptions = highlightOptions(color = "white", weight = 20,bringToFront = TRUE))%>% 
   
   #Mooring Operations
@@ -322,11 +333,17 @@ route<-leaflet(data4) %>%
   
 addCircleMarkers(lng=moorings$lon_dd, lat=moorings$lat_dd, weight = 2, radius=20, color="green",stroke = TRUE, opacity=0.5,
                  group="Mooring Locations",fillOpacity = 0.5, clusterOptions=markerClusterOptions(radius=5),
-                 popup=paste ("ID:",moorings$ID,"|", "Station:", moorings$station,"|","Lon:", round(moorings$lon_dd,3), "|",
-                              "Lat:",round(moorings$lat_dd,3), "|","Depth:",round(moorings$depth_m,1),"m","|", "Arrival:",
-                              substrLeft(moorings$arrival,16),"|","Departure:",substrLeft(moorings$departure,16), "|","Op Time:",
-                              (moorings$optime+moorings$xoptime),"hr(s)","|","Operation(s):",moorings$operation, "|","Next Stn:",
-                              round(moorings$dist_nm,1),"nm","&",round(moorings$trans_hr,1),"hr(s)",sep=" "))%>%
+                 popup=paste("ID:",moorings$ID,"|", 
+                              "Station:", moorings$station,"|",
+                              "Lon:", round(moorings$lon_dd,3), "|",
+                              "Lat:",round(moorings$lat_dd,3), "|",
+                              "Depth:",round(moorings$depth_m,1),"m","|", 
+                              "Arrival:", substrLeft(moorings$arrival,16),"|",
+                              "Departure:",substrLeft(moorings$departure,16), "|",
+                              "Op Time:", (moorings$optime+moorings$xoptime),"hr(s)","|",
+                              "Operation(s):",moorings$operation, "|",
+                              "Next Stn:", round(moorings$dist_nm,1),"nm","&",round(moorings$trans_hr,1),"hr(s)",
+                              sep=" "))%>%
   
   
   
