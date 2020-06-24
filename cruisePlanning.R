@@ -3,10 +3,9 @@
 ### - Section that may have to be run
 #### - Parameter that will be necessary to change
 
-
 # Sections must be run in the order presented:
 
-### 1. Load Packages only if they are not already installed----
+### 1. Download packages only if they are not already installed----
 
 if (!require('rgdal')) install.packages('rgdal')
 if (!require('dismo')) install.packages('dismo')
@@ -36,7 +35,7 @@ library(Orcs)
 library(marmap) # for obtaining bathymetry if no bathy file is given
 library(fields) # for interp.surface if no bathy file is given
 
-#### 2. Choose your input file ----
+#### 3. Choose your input file ----
 
 ##Enter path for route
 
@@ -49,11 +48,11 @@ file2 <- basename(file)
 l <- nrow(data) #number of data rows for loop to add fields
 data$ID <- seq(from=1, to=max(l))
 
-#### 3. Enter Start Date ----
+#### 4. Enter Start Date ----
 
 s <- ISOdate(2019, 10, 05, 18) #start date and time for mission (Year, month, day, 24hr time)
 
-### 4. point to various paths 
+### 5. point to various paths ----
 
 ##Enter file name for ascii bathymetry
 
@@ -90,7 +89,7 @@ funs <- './functions'
 
 shapes <- "./shapefiles"
 
-## 5. Distance and time calculations ----
+## 6. Distance and time calculations ----
 
 # calculate distance between input coordinates
 idx1 <- 1:(length(data[['lon_dd']])-1)
@@ -155,7 +154,7 @@ for (n in 2:l){
 
 #This is where to ask the user to enter a shapefile output name
 
-## 7. Extract depth from ASCII - turn on and off ----
+## 7. Extract the depth from bathy and prep data for output ----
 if (file.exists(rwd)) {
   depth <- readAsciiGrid(rwd, proj4string=CRS("+proj=longlat +datum=WGS84"))#assigns ASCII grid from rwd to variable name
 
@@ -167,8 +166,6 @@ if (file.exists(rwd)) {
 
   data <- cbind(data,extval)
   names(data)[names(data) %in% basename(rwd)] <- "depth_m"
-
-  ## 8. Prepare data for export as a shape file and .csv and remove depth from type "Transit". and create a htmlplot for export ----
   data1 <- data[, names(data) %in% c("lon_dd", "lat_dd")]
   data2 <- data
   
@@ -206,6 +203,7 @@ lat_dd_e[max(l)] <- data3$lat_dd[max(l)]
 data3$lon_dd_e <- lon_dd_e
 data3$lat_dd_e <- lat_dd_e
 
+## 8. Write shapefile and save .csv. Create a htmlplot for export ----
 
 ##These next few steps reorder the data for final export as shape file and csv
 ##You will likely have to change the variables for your export
