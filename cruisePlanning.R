@@ -41,7 +41,7 @@ library(fields) # for interp.surface if no bathy file is given
 
 routepath <- "./routes"
 
-file <- "AZMPSpring_2020_config_01.csv"
+file <- "AZMPFall_2020_WorstCaseScenario_COREOnly_SydneyDemob_v2.csv"
 data <- read.csv(paste(routepath,"/",file,sep=""), stringsAsFactors=F, fileEncoding="Latin1")
 file2 <- basename(file)
 
@@ -50,7 +50,7 @@ data$ID <- seq(from=1, to=max(l))
 
 #### 4. Enter Start Date ----
 
-s <- ISOdate(2019, 10, 05, 18) #start date and time for mission (Year, month, day, 24hr time)
+s <- ISOdate(2020, 10, 08, 09) #start date and time for mission (Year, month, day, 24hr time)
 
 ### 5. Point to various paths ----
 
@@ -124,19 +124,33 @@ data$lon_dms <- dd_dms(data[['lon_dd']],l,"x")
 
 ##This formula calculates your transit time using your distance in nautical miles/vessel transit speed
 data$trans_hr <- round(data$dist_nm/data$kts,2)
+# initialize arrival and departure
 data$arrival[1] <- "start"
 data$departure[1] <- as.character(s)
 
-for (n in 2:l){
-  
-  if(n>=2 & n<=(max(l)-1)) data$arrival[n] <- as.character(s+(data$trans_hr[n-1]*3600))
-  s <- s+(data$trans_hr[n-1]*3600)
-  if(n>=2 & n<=(max(l)-1)) data$departure[n]<-as.character(s+(data$optime[n]+data$xoptime[n])*3600)
-  s <- s+((data$optime[n]+data$xoptime[n])*3600)
-  if (n==max(l)) data$departure[n]<-"End" 
-  if (n==max(l)) data$arrival[n]<-as.character(s+(data$trans_hr[n-1]*3600))
+# for (n in 2:l){
+#   
+#   if(n>=2 & n<=(max(l)-1)) data$arrival[n] <- as.character(s+(data$trans_hr[n-1]*3600))
+#   s <- s+(data$trans_hr[n-1]*3600)
+#   if(n>=2 & n<=(max(l)-1)) data$departure[n]<-as.character(s+(data$optime[n]+data$xoptime[n])*3600)
+#   s <- s+((data$optime[n]+data$xoptime[n])*3600)
+#   if (n==max(l)) data$departure[n]<-"End" 
+#   if (n==max(l)) data$arrival[n]<-as.character(s+(data$trans_hr[n-1]*3600))
+# 
+# }
 
+for (n in 2:(l-1)){
+  # first calculate arrival
+  s <- s + (data$trans_hr[n-1]*3600)
+  data$arrival[n] <- as.character(s)
+  # then calculate departure
+  s <- s + ((data$optime[n] + data$xoptime[n]) * 3600)
+  data$departure[n] <- as.character(s)
 }
+
+# finalize arrival and departure
+data$arrival[l] <- as.character(s + (data$trans_hr[l-1] * 3600))
+data$departure[l] <- "end"
 
 ## This part is only necessary if you need to convert ESRI GRID format to ASCII format.##
 ## You could add another grid (e.g., GEBCO) to be used in your calculations but it is  ##
