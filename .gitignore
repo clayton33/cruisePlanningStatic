@@ -47,5 +47,6 @@ bathymetry/*
 routes/*
 # keep one for an example
 !routes/AZMPSpring_2020_config_01.csv
-# ignore any downloaded bathymetry data
+# ignore any downloaded bathymetry data (marmap and oce)
 *.csv
+*.nc
