@@ -16,8 +16,7 @@ if (!require('mapview')) install.packages('mapview')
 if (!require('shiny')) install.packages('shiny')
 if (!require('oce')) install.packages('oce')
 if (!require('Orcs')) install.packages('Orcs') # for coords2Lines, was in mapview
-if (!require('marmap')) install_github(repo = "ericpante/marmap",
-                                       ref = 'master', force = TRUE) # git version due to NOAA server changes
+if (!require('fields')) install.packages('fields')
 #if (!require('devtools')) install.packages('devtools')
 #devtools::install_github('oce')
 
@@ -32,7 +31,6 @@ library(mapview)
 library(leaflet)
 library(oce)
 library(Orcs)
-library(marmap) # for obtaining bathymetry if no bathy file is given
 library(fields) # for interp.surface if no bathy file is given
 
 #### 3. Choose your input file ----
@@ -74,11 +72,16 @@ if(!file.exists(rwd)){
                 ifelse(abs(max(data[['lon_dd']]) - lonrange[2]) < 2.5, lonrange[2] + 10, lonrange[2]))
   latrange <- c(ifelse(abs(min(data[['lat_dd']]) - latrange[1]) < 2.5, latrange[1] - 10, latrange[1]),
                 ifelse(abs(max(data[['lat_dd']]) - latrange[2]) < 2.5, latrange[2] + 10, latrange[2]))
-  
-  noaatopo <- getNOAA.bathy(lon1 = lonrange[1], lon2 = lonrange[2],
-                            lat1 = latrange[1], lat2 = latrange[2],
-                            keep=TRUE, resolution = 1)
-  topo <- as.topo(noaatopo)
+  # marmap, keep it for now, but use oce way for the time being
+  # noaatopo <- getNOAA.bathy(lon1 = lonrange[1], lon2 = lonrange[2],
+  #                           lat1 = latrange[1], lat2 = latrange[2],
+  #                           keep=TRUE, resolution = 1)
+  # topo <- as.topo(noaatopo)
+  # oce
+  topoFile <- download.topo(west = lonrange[1], east = lonrange[2],
+                            south = latrange[1], north = latrange[2],
+                            resolution = 1)
+  topo <- read.topo(topoFile)
 }
 
 ## Enter path for functions
