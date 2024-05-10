@@ -7,31 +7,27 @@
 
 ### 1. Download packages only if they are not already installed----
 
-if (!require('rgdal')) install.packages('rgdal')
-if (!require('dismo')) install.packages('dismo')
-if (!require('raster')) install.packages('raster')
-if (!require('maptools')) install.packages('maptools')
-if (!require('rgeos')) install.packages('rgeos')
-if (!require('mapview')) install.packages('mapview')
-if (!require('shiny')) install.packages('shiny')
-if (!require('oce')) install.packages('oce')
-if (!require('Orcs')) install.packages('Orcs') # for coords2Lines, was in mapview
-if (!require('fields')) install.packages('fields')
+if (!require('leaflet')) install.packages('dismo')
+if (!require('oce')) install.packages('raster')
+if (!require('Orcs')) install.packages('maptools')
+if (!require('fields')) install.packages('rgeos')
+if (!require('sp')) install.packages('mapview')
+if (!require('htmlwidgets')) install.packages('shiny')
+if (!require('sf')) install.packages('oce')
+if (!require('leafem')) install.packages('Orcs') # for coords2Lines, was in mapview
 #if (!require('devtools')) install.packages('devtools')
 #devtools::install_github('oce')
 
 ### 2. Loading libraries ---- 
 
-library(rgdal)
-library(dismo)
-library(raster)
-library(maptools) 
-library(rgeos)
-library(mapview)
-library(leaflet)
-library(oce)
-library(Orcs)
+library(leaflet) # needed
+library(oce) # needed
+library(Orcs) # needed for coords2Lines
 library(fields) # for interp.surface if no bathy file is given
+library(sp) # needed
+library(htmlwidgets) # needed
+library(sf) # needed to replace rgdal fn calls (readOGR)
+library(leafem) # for adding mouseCoordinates
 
 #### 3. Choose your input file ----
 
@@ -101,7 +97,7 @@ idx2 <- 2:length(data[['lon_dd']])
 # use maintained function geoDist
 # but this method uses vincenty
 # differences are small, and the cumulative difference is only 2nm
-distkm <- geodDist(longitude1 = data[['lon_dd']][idx1],
+distkm <- oce::geodDist(longitude1 = data[['lon_dd']][idx1],
                    latitude1 = data[['lat_dd']][idx1],
                    longitude2 = data[['lon_dd']][idx2],
                    latitude2 = data[['lat_dd']][idx2])
@@ -173,28 +169,27 @@ data$departure[l] <- "end"
 
 ## 7. Extract the depth from bathy and prep data for output ----
 if (file.exists(rwd)) {
-  depth <- readAsciiGrid(rwd, proj4string=CRS("+proj=longlat +datum=WGS84"))#assigns ASCII grid from rwd to variable name
+  depth <- sp::read.asciigrid(fname = rwd, 
+                              proj4string = CRS("+proj=longlat +datum=WGS84")) #assigns ASCII grid from rwd to variable name
 
   data1 <- data[, names(data) %in% c("lon_dd", "lat_dd")]
   data2 <- data[, !names(data) %in% c("lon_dd", "lat_dd")]
-  data3 <- SpatialPointsDataFrame(data1, data2, coords.nrs = numeric(0),proj4string = CRS("+proj=longlat +datum=WGS84"), match.ID = TRUE, bbox = NULL)
+  data3 <- sp::SpatialPointsDataFrame(data1, data2, coords.nrs = numeric(0),proj4string = CRS("+proj=longlat +datum=WGS84"), match.ID = TRUE, bbox = NULL)
   # this is the inferred depth, mult by -1 to get it in depth below sealevel
   extval <- round(over(data3, depth),2) * -1 
-
+  # rename it
+  names(extval) <- 'depth_m'
   data <- cbind(data,extval)
-  names(data)[names(data) %in% basename(rwd)] <- "depth_m"
+  data[['depth_m']] <- ifelse(data$type=='Transit', 0, data$depth_m) # remove depth values from transit points 
   data1 <- data[, names(data) %in% c("lon_dd", "lat_dd")]
   data2 <- data
-  
-  data3 <- SpatialPointsDataFrame(data1, data2, 
+  data3 <- sp::SpatialPointsDataFrame(data1, data2, 
                                   coords.nrs = numeric(0), 
                                   proj4string = CRS("+proj=longlat +datum=WGS84"), 
                                   match.ID = TRUE, bbox = NULL)
-
-  data3[['depth_m']] <- ifelse(data3$type=='Transit', 0, data3$depth_m) #This filter just removes depth values from transit points
 } else {
   # get depth at stations using topo
-  zs <- interp.surface(obj = list(x = topo[['longitude']],
+  zs <- fields::interp.surface(obj = list(x = topo[['longitude']],
                                   y = topo[['latitude']],
                                   z = topo[['z']]),
                        loc = cbind(data[['lon_dd']],
@@ -202,7 +197,7 @@ if (file.exists(rwd)) {
   data[['depth_m']] <- zs
   data[['depth_m']] <- ifelse(data[['type']] == 'Transit', 0, data[['depth_m']])
   coords <- data[, names(data) %in% c("lon_dd", "lat_dd")]
-  data3 <- SpatialPointsDataFrame(coords = coords, data = data, 
+  data3 <- sp::SpatialPointsDataFrame(coords = coords, data = data, 
                                   coords.nrs = numeric(0), 
                                   proj4string = CRS("+proj=longlat +datum=WGS84"), 
                                   match.ID = TRUE, bbox = NULL)
@@ -246,17 +241,20 @@ file4 <- paste(file3,".csv", sep="")
 
 ## writes point shapefile and planning csv
 try({
-  writeOGR(data3, routepath, file3, driver="ESRI Shapefile",overwrite_layer=TRUE)
+  st_write(obj = st_as_sf(data3), dsn = routepath, layer = file3, driver = "ESRI Shapefile", overwrite_layer = TRUE)
 })
 
 ## Define Shapelayers for Output
 
-closures <- readOGR(dsn=shapes,
-                    layer = "ProtectedAreasMerge_2017_WGS84", GDAL1_integer64_policy = TRUE)
-EEZ <- readOGR(dsn=shapes,
-               layer = "EEZ_WGS", GDAL1_integer64_policy = TRUE)
-NAFO <- readOGR(dsn=shapes,
-                layer = "NAFO_DivisionsPoly_WGS", GDAL1_integer64_policy = TRUE)
+closures <- sf::st_read(dsn = shapes,
+                        layer = "ProtectedAreasMerge_2017_WGS84") %>%
+  st_transform('+proj=longlat +datum=WGS84') # transform it to use it in leaflet
+EEZ <- sf::st_read(dsn = shapes,
+                   layer = "EEZ_WGS") %>%
+  st_transform('+proj=longlat +datum=WGS84') # transform it to use it in leaflet
+NAFO <- sf::st_read(dsn = shapes,
+                    layer = "NAFO_DivisionsPoly_WGS") %>%
+  st_transform('+proj=longlat +datum=WGS84') # transform it to use it in leaflet
 
 data4 <- as.data.frame(data3)
 # omit lon[lat]_dd_ee 
@@ -264,7 +262,6 @@ data4 <- data4[,!names(data4) %in% c('lon_dd_ee', 'lat_dd_ee')]
 ##write summary csv that has same order of variables as shapefile
 write.csv(data4, paste(routepath, file4, sep="/"), row.names=F)
 
-library(htmlwidgets)
 #position of transit points
 tpts <- subset(data4, type == "Transit")
 #position of mooring points
@@ -279,32 +276,38 @@ et <- nrow(data4) #et=end time
 dur <- print(paste("The mission is",round(as.numeric(difftime(strptime(data4$arrival[et],"%Y-%m-%d %H:%M:%S"),strptime(data4$departure[1],"%Y-%m-%d %H:%M:%S"))),0), "days long.",sep=" "))
 
 
-route<-leaflet(data4) %>%
-  fitBounds(min(data4$lon_dd),min(data4$lat_dd),max(data4$lon_dd),max(data4$lat_dd)) %>%
-  addTiles(urlTemplate = 'http://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}', 
-           attribution = 'Tiles &copy; Esri &mdash; National Geographic, Esri, DeLorme, NAVTEQ, UNEP-WCMC, USGS, NASA, ESA, METI, NRCAN, GEBCO, NOAA, iPC')%>%  # Add awesome tiles
-  
-  #EEZ
-  addPolylines(data=EEZ, group = "EEZ", color = "red", weight = 2, smoothFactor = 0.5, opacity = 0.5)%>%
-  
+route <- leaflet::leaflet(data4) %>%
+  leaflet::fitBounds(min(data4$lon_dd),min(data4$lat_dd),max(data4$lon_dd),max(data4$lat_dd)) %>%
+  leaflet::addTiles(urlTemplate = 'http://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}', 
+           attribution = 'Tiles &copy; Esri &mdash; National Geographic, Esri, DeLorme, NAVTEQ, UNEP-WCMC, USGS, NASA, ESA, METI, NRCAN, GEBCO, NOAA, iPC')%>%
+
   #NAFO Divisions
-  addPolygons(data=NAFO, group = "NAFO Zones", color = "#444444", weight = 0.5, smoothFactor = 0.5, popup=paste(NAFO$ZONE),opacity = 0.5, 
-              fillOpacity = 0, 
-              highlightOptions = highlightOptions(color = "white", weight = 2))%>%
+  leaflet::addPolygons(data=NAFO, group = "NAFO Zones", color = "#444444", weight = 0.5,
+                       smoothFactor = 0.5, popup=paste(NAFO$ZONE), 
+                       opacity = 0.5, fillOpacity = 0, 
+                       highlightOptions = highlightOptions(color = "white", weight = 2))%>%
+  # #EEZ
+  # leaflet::addPolylines(data = EEZ,
+  #                       group = "EEZ",
+  #                       color = "magenta", weight = 2,
+  #                       smoothFactor = 0.5, opacity = 0.5)%>%
   
   #Closures
-  addPolygons(data=closures, group = "Closure Areas", color = "#444444", weight = 1, smoothFactor = 0.5, popup=paste(closures$Name),opacity = 1.0, 
-              fillOpacity = 0.2, 
-              highlightOptions = highlightOptions(color = "white", weight = 2))%>%
+  leaflet::addPolygons(data = closures, group = "Closure Areas", color = "#444444", weight = 1, 
+                       smoothFactor = 0.5, popup=paste(closures$Name), 
+                       opacity = 1.0, fillOpacity = 0.2, 
+                       highlightOptions = highlightOptions(color = "white", weight = 2))%>%
   
   #Mission Route
-  addPolylines(data=data4ln,color="blue",weight=1,popup=paste(file,"Route","|",dur,sep=" "),
-               highlightOptions = highlightOptions(color = "white", weight = 10,bringToFront = TRUE),group="Route")%>%
+  leaflet::addPolylines(data = data4ln, group="Route", color = "blue", weight=1, 
+                        popup=paste(file,"Route","|",dur,sep=" "), 
+                        highlightOptions = highlightOptions(color = "white", weight = 10,bringToFront = TRUE))%>%
   
   #Transit Points
-  addCircles(lng=tpts$lon_dd,lat=tpts$lat_dd, weight = 5, radius=10, color="red", stroke = TRUE,opacity=0.5,
-             group="Transit Locations",fillOpacity = 1,
-             popup=paste ("ID:",tpts$ID,"|", 
+  leaflet::addCircles(lng = tpts$lon_dd,lat = tpts$lat_dd, group="Transit Locations", 
+                      color="red", weight = 5, radius=10, stroke = TRUE, 
+                      opacity=0.5, fillOpacity = 1, 
+                      popup=paste ("ID:",tpts$ID,"|", 
                           "Station:", tpts$type,"|",
                           "Lon:", round(tpts$lon_dd,3), "|",
                           "Lat:", round(tpts$lat_dd,3),"|",
@@ -312,12 +315,13 @@ route<-leaflet(data4) %>%
                           "Departure:", substrLeft(tpts$departure,16), 
                           "Next Stn:",round(tpts$dist_nm,1),"nm","&",round(tpts$trans_hr,1), "hr(s)", 
                           sep=" "), 
-             highlightOptions = highlightOptions(color = "white", weight = 20,bringToFront = TRUE))%>%
+                      highlightOptions = highlightOptions(color = "white", weight = 20,bringToFront = TRUE))%>%
   
   #Operations Points
-  addCircles(lng=opts$lon_dd, lat=opts$lat_dd, weight = 5, radius=10, color="yellow",stroke = TRUE, opacity=.5,
-             group="Operations Locations",fillOpacity = 1, 
-             popup=paste ("ID:",opts$ID,"|", 
+  leaflet::addCircles(lng = opts$lon_dd, lat = opts$lat_dd, group="Operations Locations",
+                      weight = 5, radius = 10, color="yellow", stroke = TRUE, opacity=.5,
+                      fillOpacity = 1, 
+                      popup=paste ("ID:",opts$ID,"|", 
                           "Station:", opts$station,"|",
                           "Lon:", round(opts$lon_dd,3), "|",
                           "Lat:", round(opts$lat_dd,3), "|",
@@ -330,19 +334,11 @@ route<-leaflet(data4) %>%
                           sep=" "),
              highlightOptions = highlightOptions(color = "white", weight = 20,bringToFront = TRUE))%>% 
   
-  #Mooring Operations
-  #addCircleMarkers(lng=moorings$lon_dd, lat=moorings$lat_dd, weight = 10, radius=10, color="green",stroke = TRUE, opacity=1,
-  #group="Mooring Locations",fillOpacity = 1, clusterOptions=markerClusterOptions(),
-  #popup=paste ("ID:",moorings$ID,"|", "Station:", moorings$station,"|","Lon:", round(moorings$lon_dd,3), "|",
-             # "Lat:",round(moorings$lat_dd,3), "|","Depth:",round(moorings$depth_m,1),"m","|", "Arrival:",
-             #substrLeft(moorings$arrival,16),"|","Departure:",substrLeft(moorings$departure,16), "|","Op Time:",
-           # (moorings$optime+moorings$xoptime),"hr(s)","|","Operation(s):",moorings$operation, "|","Next Stn:",
-          # round(moorings$dist_nm,1),"nm","&",round(moorings$trans_hr,1),"hr(s)",sep=" "), 
-  #highlightOptions = highlightOptions(color = "white", weight = 20,bringToFront = TRUE))%>%
-  
-addCircleMarkers(lng=mpts$lon_dd, lat=mpts$lat_dd, weight = 2, radius=20, color="green",stroke = TRUE, opacity=0.5,
-                 group="Mooring Locations",fillOpacity = 0.5, clusterOptions=markerClusterOptions(radius=5),
-                 popup=paste("ID:",mpts$ID,"|", 
+  # Mooring Operations
+  leaflet::addCircleMarkers(lng = mpts$lon_dd, lat = mpts$lat_dd, group="Mooring Locations",
+                            weight = 2, radius=20, color="green",stroke = TRUE, opacity=0.5,
+                            fillOpacity = 0.5, clusterOptions = markerClusterOptions(radius=5), 
+                            popup=paste("ID:",mpts$ID,"|", 
                               "Station:", mpts$station,"|",
                               "Lon:", round(mpts$lon_dd,3), "|",
                               "Lat:",round(mpts$lat_dd,3), "|",
@@ -352,32 +348,27 @@ addCircleMarkers(lng=mpts$lon_dd, lat=mpts$lat_dd, weight = 2, radius=20, color=
                               "Op Time:", (mpts$optime+mpts$xoptime),"hr(s)","|",
                               "Operation(s):",mpts$operation, "|",
                               "Next Stn:", round(mpts$dist_nm,1),"nm","&",round(mpts$trans_hr,1),"hr(s)",
-                              sep=" "))%>%
-  
-  
-  
-  #Add Mouse Coordinates
-  leafem::addMouseCoordinates(epsg = NULL,proj4string = NULL, native.crs = FALSE)%>%
-  
-  #Operations Points Labels
-  addLabelOnlyMarkers(lng=opts$lon_dd, lat=opts$lat_dd,label =  as.character(opts$station),group="Station Labels", 
+                              sep=" ")) %>%
+  # #Add Mouse Coordinates
+  # leafem::addMouseCoordinates(epsg = NULL,proj4string = NULL, native.crs = FALSE)%>%
+  # #Operations Points Labels
+  leaflet::addLabelOnlyMarkers(lng=opts$lon_dd, lat=opts$lat_dd,label =  as.character(opts$station),group="Station Labels",
                       labelOptions = labelOptions(noHide = T, direction = 'top', textOnly = T))%>%
-  
-  #Legend
-  addLegend("bottomright", colors= c("yellow", "red","Green","blue"), labels=c("Operations","Transit","Moorings","Route"), title=paste("Map created on ",Sys.Date(),": ",file),opacity=1)%>% 
-  
-  #Scale Bar
-  addScaleBar("bottomleft",options=scaleBarOptions(maxWidth=100,imperial=T,metric=T,updateWhenIdle=T))
+  # #Legend
+  leaflet::addLegend("bottomright",
+                     colors= c("yellow", "red","green","blue"),
+                     labels=c("Operations","Transit","Moorings","Route"),
+                     title=paste("Map created on ",Sys.Date(),": ",file), opacity=1) %>%
+
+  # #Scale Bar
+  # leaflet::addScaleBar("bottomleft",options=scaleBarOptions(maxWidth=100,imperial=T,metric=T,updateWhenIdle=T))
   
   #Layer Control
-  #addLayersControl(
-   # overlayGroups = c("Operations Locations","Transit Locations","Mooring Locations","Route","Station Labels", "Closure Areas", "NAFO Zones", "EEZ"),
-    #options = layersControlOptions(collapsed = TRUE)
-  #)
+  addLayersControl(
+  overlayGroups = c("Operations Locations","Transit Locations","Mooring Locations","Route","Station Labels", "Closure Areas", "NAFO Zones", "EEZ"),
+  options = layersControlOptions(collapsed = TRUE)
+  )
 
 route
-
-library(tools)   # unless already loaded, comes with base R
 route_html <- paste(file_path_sans_ext(file),"_",as.numeric(format(Sys.Date(), "%y%m%d")),"_",time,".html",sep="")
-
 saveWidget(widget = route, file = route_html)
