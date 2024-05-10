@@ -15,6 +15,7 @@ if (!require('sp')) install.packages('mapview')
 if (!require('htmlwidgets')) install.packages('shiny')
 if (!require('sf')) install.packages('oce')
 if (!require('leafem')) install.packages('Orcs') # for coords2Lines, was in mapview
+if (!require('tools')) install.packages('tools')
 #if (!require('devtools')) install.packages('devtools')
 #devtools::install_github('oce')
 
@@ -28,6 +29,7 @@ library(sp) # needed
 library(htmlwidgets) # needed
 library(sf) # needed to replace rgdal fn calls (readOGR)
 library(leafem) # for adding mouseCoordinates
+library(tools) # for saving
 
 #### 3. Choose your input file ----
 
